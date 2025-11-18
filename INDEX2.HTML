@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>QuickQuiz — Create & Take Quizzes</title>
+<style>
+  :root{
+    --bg:#0f1724; --card:#0b1220; --accent:#7c3aed; --muted:#94a3b8; --good:#16a34a; --bad:#ef4444;
+    --glass: rgba(255,255,255,0.03);
+    --radius:12px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;padding:24px;background:linear-gradient(180deg,#071028 0%, #071730 100%); color:#e6eef8;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  }
+  .container{
+    max-width:1100px;margin:0 auto;display:grid;grid-template-columns: 300px 1fr; gap:20px;
+  }
+
+  /* Sidebar */
+  .sidebar{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:var(--radius); padding:18px; box-shadow: 0 6px 24px rgba(2,6,23,0.6);
+    min-height:360px;
+  }
+  .brand{display:flex;gap:12px;align-items:center;margin-bottom:14px}
+  .logo{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--accent),#06b6d4);display:flex;align-items:center;justify-content:center;font-weight:700}
+  h1{font-size:18px;margin:0}
+  .muted{color:var(--muted);font-size:13px;margin-top:6px}
+
+  nav{margin-top:14px;display:flex;flex-direction:column;gap:8px}
+  .nav-btn{background:transparent;border:1px solid rgba(255,255,255,0.04);padding:10px;border-radius:10px;color:inherit;text-align:left;cursor:pointer}
+  .nav-btn.active{background:linear-gradient(90deg, rgba(124,58,237,0.12), rgba(6,182,212,0.06));border:1px solid rgba(124,58,237,0.25)}
+  .small{font-size:13px;color:var(--muted)}
+
+  .user-card{margin-top:14px;padding:12px;border-radius:10px;background:var(--glass);display:flex;align-items:center;gap:12px}
+  .avatar{width:44px;height:44px;border-radius:10px;background:linear-gradient(180deg,#1f2937,#111827);display:flex;align-items:center;justify-content:center;font-weight:700}
+  .user-actions{display:flex;gap:8px;margin-top:12px}
+
+  /* Main area */
+  .main{
+    min-height:640px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:var(--radius); padding:20px; box-shadow: 0 6px 24px rgba(2,6,23,0.6);
+  }
+  header.main-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px}
+  .cta{display:flex;gap:10px}
+  button.primary{background:linear-gradient(90deg,var(--accent),#06b6d4);border:0;padding:10px 14px;border-radius:10px;color:#06121a;cursor:pointer;font-weight:600}
+  button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);padding:10px 12px;border-radius:10px;color:var(--muted);cursor:pointer}
+
+  /* Cards & lists */
+  .card{background: rgba(255,255,255,0.02); padding:14px;border-radius:12px;margin-bottom:12px}
+  .quiz-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+  .quiz-item{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.01), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.03)}
+  .quiz-item h3{margin:0 0 6px 0;font-size:16px}
+  .quiz-meta{font-size:13px;color:var(--muted);display:flex;justify-content:space-between;align-items:center}
+
+  /* Form styles */
+  label{display:block;font-size:13px;margin-bottom:6px;color:var(--muted)}
+  input[type="text"], input[type="password"], textarea, select{
+    width:100%;padding:10px;border-radius:8px;border:1px solid rgba(255,255,255,0.04);background:transparent;color:inherit;
+  }
+  textarea{min-height:80px}
+  .row{display:flex;gap:10px}
+  .flex{flex:1}
+
+  .question-block{border:1px dashed rgba(255,255,255,0.03);padding:12px;border-radius:10px;margin-bottom:10px;}
+  .choices{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+  .choice-row{display:flex;gap:8px;align-items:center}
+
+  .small-muted{font-size:12px;color:var(--muted)}
+
+  /* Quiz taking UI */
+  .question-screen{display:flex;flex-direction:column;gap:12px}
+  .options{display:flex;flex-direction:column;gap:8px}
+  .opt{padding:12px;border-radius:10px;border:1px solid rgba(255,255,255,0.03);cursor:pointer}
+  .opt.selected{outline:3px solid rgba(124,58,237,0.12)}
+  .feedback{padding:10px;border-radius:8px;font-weight:600}
+  .feedback.good{background:rgba(22,163,74,0.12);color:var(--good);border:1px solid rgba(22,163,74,0.14)}
+  .feedback.bad{background:rgba(239,68,68,0.08);color:var(--bad);border:1px solid rgba(239,68,68,0.12)}
+
+  /* Results */
+  .results{display:grid;grid-template-columns:1fr 260px;gap:12px}
+  .result-summary{padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(124,58,237,0.06), rgba(6,182,212,0.03))}
+
+  footer{margin-top:16px;color:var(--muted);font-size:13px;text-align:center}
+
+  /* Responsive */
+  @media (max-width:900px){
+    .container{grid-template-columns:1fr; padding-bottom:40px}
+    .sidebar{order:2}
+    .main{order:1}
+    .results{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar" aria-label="Sidebar">
+    <div class="brand">
+      <div class="logo">QZ</div>
+      <div>
+        <h1>QuickQuiz</h1>
+        <div class="muted">Make and take quizzes — instantly</div>
+      </div>
+    </div>
+
+    <nav>
+      <button class="nav-btn active" data-view="home">Home</button>
+      <button class="nav-btn" data-view="create">Create Quiz</button>
+      <button class="nav-btn" data-view="list">Browse Quizzes</button>
+      <button class="nav-btn" data-view="myquizzes">My Quizzes</button>
+      <button class="nav-btn" data-view="profile">Profile</button>
+    </nav>
+
+    <div style="margin-top:14px">
+      <div class="small-muted">Logged in as</div>
+      <div class="user-card" id="userCard">
+        <div class="avatar" id="avatarInitial">G</div>
+        <div>
+          <div id="usernameDisplay">Guest</div>
+          <div class="small-muted" id="userEmail">Not signed in</div>
+          <div class="user-actions" style="margin-top:8px">
+            <button class="ghost" id="btnLogin">Login</button>
+            <button class="ghost" id="btnRegister">Register</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main" id="main">
+    <!-- dynamic content injected here -->
+  </main>
+
+</div>
+
+<footer>Built with ❤️ — QuickQuiz (single-file demo). Data saved to your browser's storage.</footer>
+
+<script>
+/* ------------------------------
+   LocalStorage keys and helpers
+   ------------------------------*/
+const LS_KEYS = {
+  USERS: 'quickquiz_users_v1',
+  QUIZZES: 'quickquiz_quizzes_v1',
+  CURRENT: 'quickquiz_current_user_v1'
+};
+
+function uid(prefix='id'){ return prefix + '_' + Math.random().toString(36).slice(2,10); }
+
+function loadJSON(key, defaultVal){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : defaultVal;
+  }catch(e){ return defaultVal; }
+}
+function saveJSON(key, value){ localStorage.setItem(key, JSON.stringify(value)); }
+
+/* Initialize storage if missing */
+if(!localStorage.getItem(LS_KEYS.USERS)) saveJSON(LS_KEYS.USERS, []);
+if(!localStorage.getItem(LS_KEYS.QUIZZES)) saveJSON(LS_KEYS.QUIZZES, []);
+
+/* ------------------------------
+   Simple Auth (localStorage)
+   ------------------------------*/
+function getCurrentUser(){ return loadJSON(LS_KEYS.CURRENT, null); }
+function setCurrentUser(u){ if(u) saveJSON(LS_KEYS.CURRENT,u); else localStorage.removeItem(LS_KEYS.CURRENT); updateUserDisplay(); }
+
+function registerUser(username, password){
+  if(!username || !password) return {ok:false,msg:'username and password required'};
+  const users = loadJSON(LS_KEYS.USERS, []);
+  if(users.find(x => x.username.toLowerCase() === username.toLowerCase())) return {ok:false,msg:'username taken'};
+  const user = { id: uid('user'), username, password };
+  users.push(user); saveJSON(LS_KEYS.USERS, users); setCurrentUser({ id: user.id, username: user.username });
+  return {ok:true,user};
+}
+function loginUser(username, password){
+  const users = loadJSON(LS_KEYS.USERS, []);
+  const u = users.find(x => x.username.toLowerCase() === username.toLowerCase() && x.password === password);
+  if(!u) return {ok:false,msg:'invalid credentials'};
+  setCurrentUser({ id: u.id, username: u.username });
+  return {ok:true,user:u};
+}
+
+/* ------------------------------
+   Quiz storage helpers
+   ------------------------------*/
+function loadQuizzes(){ return loadJSON(LS_KEYS.QUIZZES, []); }
+function saveQuizzes(list){ saveJSON(LS_KEYS.QUIZZES, list); }
+function addQuiz(quiz){
+  const list = loadQuizzes();
+  list.unshift(quiz);
+  saveQuizzes(list);
+}
+function getQuizById(id){ return loadQuizzes().find(q => q.id === id); }
+function removeQuiz(id){
+  const list = loadQuizzes().filter(q => q.id !== id);
+  saveQuizzes(list);
+}
+
+/* ------------------------------
+   UI state & utilities
+   ------------------------------*/
+const main = document.getElementById('main');
+const navButtons = document.querySelectorAll('.nav-btn');
+
+function clearActiveNav(){ navButtons.forEach(b => b.classList.remove('active')); }
+function setView(view){
+  clearActiveNav();
+  const btn = document.querySelector('.nav-btn[data-view="'+view+'"]');
+  if(btn) btn.classList.add('active');
+  // render
+  if(view === 'home') renderHome();
+  if(view === 'create') renderCreate();
+  if(view === 'list') renderList();
+  if(view === 'myquizzes') renderMyQuizzes();
+  if(view === 'profile') renderProfile();
+}
+
+/* Attach nav events */
+navButtons.forEach(b => b.addEventListener('click', () => setView(b.dataset.view)));
+
+function updateUserDisplay(){
+  const cur = getCurrentUser();
+  const usernameDisplay = document.getElementById('usernameDisplay');
+  const userEmail = document.getElementById('userEmail');
+  const avatar = document.getElementById('avatarInitial');
+  if(cur){
+    usernameDisplay.textContent = cur.username;
+    userEmail.textContent = 'Signed in';
+    avatar.textContent = cur.username.slice(0,1).toUpperCase();
+    document.getElementById('btnLogin').textContent = 'Logout';
+    document.getElementById('btnRegister').textContent = 'Account';
+  } else {
+    usernameDisplay.textContent = 'Guest';
+    userEmail.textContent = 'Not signed in';
+    avatar.textContent = 'G';
+    document.getElementById('btnLogin').textContent = 'Login';
+    document.getElementById('btnRegister').textContent = 'Register';
+  }
+}
+document.getElementById('btnLogin').addEventListener('click', () => {
+  if(getCurrentUser()) { setCurrentUser(null); alert('Logged out'); setView('home'); }
+  else showAuthDialog('login');
+});
+document.getElementById('btnRegister').addEventListener('click', () => {
+  if(getCurrentUser()) showAuthDialog('profile'); else showAuthDialog('register');
+});
+
+/* ------------------------------
+   Render: Home
+   ------------------------------*/
+function renderHome(){
+  main.innerHTML = `
+    <header class="main-head">
+      <div>
+        <h2 style="margin:0">Welcome to QuickQuiz</h2>
+        <div class="small-muted" style="margin-top:6px">Create quizzes or test yourself — everything runs in your browser.</div>
+      </div>
+      <div class="cta">
+        <button class="primary" id="toCreate">Create Quiz</button>
+        <button class="ghost" id="toBrowse">Browse Quizzes</button>
+      </div>
+    </header>
+
+    <section class="card">
+      <h3 style="margin-top:0">How it works</h3>
+      <ol class="small-muted">
+        <li>Create a quiz with questions and 2–6 choices each. Mark the correct choice.</li>
+        <li>Save it — it will appear in the quiz list.</li>
+        <li>Anyone can take quizzes and get instant feedback and a final score.</li>
+      </ol>
+    </section>
+
+    <section class="card">
+      <h3 style="margin-top:0">Featured quizzes</h3>
+      <div id="featured" class="quiz-list"></div>
+    </section>
+  `;
+
+  document.getElementById('toCreate').addEventListener('click', () => setView('create'));
+  document.getElementById('toBrowse').addEventListener('click', () => setView('list'));
+
+  // Show up to 6 recent quizzes
+  const featuredEl = document.getElementById('featured');
+  const quizzes = loadQuizzes();
+  if(quizzes.length === 0){
+    featuredEl.innerHTML = `<div class="small-muted">No quizzes yet — create the first one!</div>`;
+  } else {
+    featuredEl.innerHTML = quizzes.slice(0,6).map(q => `
+      <div class="quiz-item">
+        <h3>${escapeHtml(q.title)}</h3>
+        <div class="quiz-meta">
+          <div class="small-muted">${q.questions.length} question(s)</div>
+          <div class="small-muted">by ${escapeHtml(q.author || 'Anonymous')}</div>
+        </div>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="primary" onclick="startQuiz('${q.id}')">Take</button>
+          <button class="ghost" onclick="previewQuiz('${q.id}')">Preview</button>
+        </div>
+      </div>
+    `).join('');
+  }
+}
+
+/* ------------------------------
+   Render: Create Quiz
+   ------------------------------*/
+function renderCreate(){
+  const cur = getCurrentUser();
+  if(!cur){
+    main.innerHTML = `
+      <div class="card">
+        <h3>Sign in to create quizzes</h3>
+        <div class="small-muted">You must be signed in to save quizzes. Create a free account (stored locally in your browser).</div>
+        <div style="margin-top:12px">
+          <button class="primary" id="goLogin">Login / Register</button>
+        </div>
+      </div>
+    `;
+    document.getElementById('goLogin').addEventListener('click', () => showAuthDialog('register'));
+    return;
+  }
+
+  main.innerHTML = `
+    <header class="main-head">
+      <div>
+        <h2 style="margin:0">Create a new quiz</h2>
+        <div class="small-muted">Add questions, choices and mark the correct answer.</div>
+      </div>
+      <div>
+        <button class="primary" id="saveQuiz">Save Quiz</button>
+      </div>
+    </header>
+
+    <div class="card">
+      <label>Quiz Title</label>
+      <input id="quizTitle" type="text" placeholder="e.g., JavaScript basics" />
+
+      <label style="margin-top:10px">Description (optional)</label>
+      <textarea id="quizDescription" placeholder="Short description"></textarea>
+    </div>
+
+    <div id="questionsArea"></div>
+
+    <div style="margin-top:12px; display:flex; gap:8px;">
+      <button class="primary" id="addQuestion">+ Add Question</button>
+      <button class="ghost" id="clearAll">Clear All</button>
+    </div>
+  `;
+
+  const questionsArea = document.getElementById('questionsArea');
+
+  // Start with one question
+  let qIndex = 0;
+  function addQuestionBlock(data){
+    const id = data && data.id ? data.id : uid('q');
+    const qn = (data && data.text) || `Question ${qIndex + 1}`;
+    const choices = (data && data.choices) || [{id:uid('c'),text:'Option 1'},{id:uid('c'),text:'Option 2'}];
+    const corre
